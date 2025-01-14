@@ -49,12 +49,11 @@ const PatientForm = () => {
   
       if (user) {
         router.push(`/patients/${user.$id}/register`);
-      } else {
-        console.error("User creation failed or user data is not returned.");
       }
     } catch (error) {
       console.error("Error creating user:", error);
-    } 
+    }
+    setIsLoading(false);
   }
   
   return (
