@@ -12,13 +12,13 @@ import { useRouter } from "next/navigation";
 
 import { createUser, registerPatient } from "@/lib/actions/patient.actions";
 import { FormFieldType } from "./PatientForm";
-import { RadioGroup } from "../ui/radio-group";
+import { RadioGroup, RadioGroupItem  } from "../ui/radio-group";
 import { Doctors, GenderOptions, IdentificationTypes, PatientFormDefaultValues } from "@/constants";
-import { RadioGroupItem } from "@radix-ui/react-radio-group";
 import { Label } from "../ui/label";
 import { SelectItem } from "../ui/select";
 import Image from "next/image";
 import FileUploader from "../FileUploader";
+
 
 const RegisterForm = ({ user }: { user: User }) => {
   const router = useRouter();
@@ -54,6 +54,7 @@ const RegisterForm = ({ user }: { user: User }) => {
         birthDate: new Date(values.birthDate),
         IdentificationDocument: formData
       }
+
       //@ts-ignore
       const patient = await registerPatient(patientData);
       if(patient) router.push(`/patients/${user.$id}/new-appointment`)
@@ -127,12 +128,12 @@ const RegisterForm = ({ user }: { user: User }) => {
               <FormControl>
                 <RadioGroup
                   className="flex h-11 gap-6 xl:justify-between"
-                  value={field.value} // Bind to form state
-                  onValueChange={(value) => field.onChange(value)} // Update form state
+                  onValueChange={field.onChange}
+                  defaultValue={field.value} 
                 >
-                  {GenderOptions.map((option) => (
+                  {GenderOptions.map((option,i) => (
                     <div
-                      key={option}
+                      key={option + i}
                       className="flex items-center space-x-2 radio-group"
                     >
                       <RadioGroupItem
@@ -140,7 +141,7 @@ const RegisterForm = ({ user }: { user: User }) => {
                         id={option}
                         className="w-4 h-4 rounded-full border border-gray-500 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       />
-                      <Label className="cursor-pointer" htmlFor={option}>
+                      <Label  htmlFor={option} className="cursor-pointer">
                         {option}
                       </Label>
                     </div>
@@ -292,7 +293,7 @@ const RegisterForm = ({ user }: { user: User }) => {
           <CustomFormField
             fieldtype={FormFieldType.SKELETON}
             control={form.control}
-            name="identifiationDocument"
+            name="identificationDocument"
             label="Scanned Copy of Identification Document"
             renderSkeleton={(
               field 
@@ -327,7 +328,7 @@ const RegisterForm = ({ user }: { user: User }) => {
           label="I consent to privacy policy"
         />
 
-        <SubmitButton isLoading={isLoading}>Get Started</SubmitButton>
+        <SubmitButton isLoading={isLoading}   onClick={() => console.log("Button clicked!")}>Get Started</SubmitButton>
       </form>
     </Form>
   );
