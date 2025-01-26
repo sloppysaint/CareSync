@@ -31,13 +31,11 @@ const RegisterForm = ({ user }: { user: User }) => {
       name: "",
       Emaill: "",
       phone: "",
-      gender: "male" as const,
     },
   });
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof PatientFormValidation>) {
-    console.log("loading started");
     setIsLoading(true);
     let formData;
   
@@ -58,13 +56,10 @@ const RegisterForm = ({ user }: { user: User }) => {
         identificationDocument: formData,
       };
   
-      console.log("Submitting patient data:", patientData);
       // @ts-ignore
       const patient = await registerPatient(patientData);
-      console.log("Patient response:", patient);
   
       if (patient) {
-        console.log("Redirecting to:", `/patients/${user.$id}/new-appointment`);
         router.push(`/patients/${user.$id}/new-appointment`);
       }
     } catch (error) {

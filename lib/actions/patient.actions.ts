@@ -1,7 +1,7 @@
 "use server";
 
-import { ID,  Query } from "node-appwrite";
-import {InputFile} from "node-appwrite/file"
+import { ID, Query } from "node-appwrite";
+import { InputFile } from "node-appwrite/file";
 import {
   BUCKET_ID,
   DB_ID,
@@ -41,6 +41,23 @@ export const createUser = async (user: CreateUserParams) => {
 };
 
 // GET USER
+export const getPatient = async (userId: string) => {
+  try {
+    const patients = await databases.listDocuments(
+      DB_ID!,
+      PATIENT_COLLECTION_ID!,
+      [Query.equal("userId", [userId])]
+    );
+
+    return parseStringify(patients.documents[0]);
+  } catch (error) {
+    console.error(
+      "An error occurred while retrieving the user details:",
+      error
+    );
+  }
+};
+//GET PATIENT
 export const getUser = async (userId: string) => {
   try {
     const user = await users.get(userId);
@@ -53,7 +70,6 @@ export const getUser = async (userId: string) => {
     );
   }
 };
-
 // REGISTER PATIENT
 export const registerPatient = async ({
   userId,
@@ -61,18 +77,10 @@ export const registerPatient = async ({
   ...patient
 }: RegisterUserParams) => {
   try {
-    console.log("Payload received in registerPatient:", {
-      userId,
-      patient,
-      identificationDocument,
-    });
-    console.log("identificationDocument structure:", identificationDocument);
-
     let file;
     let identificationDocumentUrl = null;
 
     if (identificationDocument) {
-
       // Extract values from FormData
       const blobFile = identificationDocument.get("blobFile") as File; // `get` returns the value of the specified key
       const fileName = blobFile?.name; // Get the file name from the `File` object
@@ -80,7 +88,10 @@ export const registerPatient = async ({
       if (blobFile && fileName) {
         // Convert File object to InputFile
         const arrayBuffer = await blobFile.arrayBuffer();
-        const inputFile = InputFile.fromBuffer(Buffer.from(arrayBuffer), fileName);
+        const inputFile = InputFile.fromBuffer(
+          Buffer.from(arrayBuffer),
+          fileName
+        );
 
         // Upload file
         file = await storage.createFile(BUCKET_ID!, ID.unique(), inputFile);
@@ -91,9 +102,6 @@ export const registerPatient = async ({
         console.error("Invalid identificationDocument provided.");
       }
     }
-    console.log("Type of identificationDocument:", typeof identificationDocument);
-    console.log("Content of identificationDocument:", identificationDocument);
-
 
     // Create new patient record
     const newPatient = await databases.createDocument(
@@ -103,7 +111,8 @@ export const registerPatient = async ({
       {
         userId,
         identificationDocumentId: file?.$id || null,
-        identificationDocumentUrl: identificationDocumentUrl || "No document provided", // Fallback for optional fields
+        identificationDocumentUrl:
+          identificationDocumentUrl || "No document provided", // Fallback for optional fields
         ...patient,
       }
     );
