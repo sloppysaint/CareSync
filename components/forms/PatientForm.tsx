@@ -35,16 +35,16 @@ const PatientForm = () => {
     resolver: zodResolver(UserFormValidation),
     defaultValues: {
       name: "",
-      email: "",
+      Emaill: "",
       phone: "",
     },
   })
  
   // 2. Define a submit handler.
-  async function onSubmit({ name, email, phone }: z.infer<typeof UserFormValidation>) {
+  async function onSubmit({ name, Emaill, phone }: z.infer<typeof UserFormValidation>) {
     setIsLoading(true);
     try {
-      const userData = { name, email, phone };
+      const userData = { name, Emaill, phone };
       const user = await createUser(userData);
   
       if (user) {
@@ -75,7 +75,7 @@ const PatientForm = () => {
         <CustomFormField
           fieldtype={FormFieldType.INPUT}
           control = {form.control}
-          name = "email"
+          name = "Emaill"
           label = "Email"
           placeholder = "joe@gmail.com"
           iconSrc = "/assets/icons/email.svg"

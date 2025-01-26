@@ -10,7 +10,7 @@ import { useState } from "react";
 import { PatientFormValidation } from "@/lib/Validation";
 import { useRouter } from "next/navigation";
 
-import { createUser, registerPatient } from "@/lib/actions/patient.actions";
+import { registerPatient } from "@/lib/actions/patient.actions";
 import { FormFieldType } from "./PatientForm";
 import { RadioGroup, RadioGroupItem  } from "../ui/radio-group";
 import { Doctors, GenderOptions, IdentificationTypes, PatientFormDefaultValues } from "@/constants";
@@ -29,40 +29,51 @@ const RegisterForm = ({ user }: { user: User }) => {
     defaultValues: {
       ...PatientFormDefaultValues,
       name: "",
-      email: "",
+      Emaill: "",
       phone: "",
+      gender: "male" as const,
     },
   });
 
   // 2. Define a submit handler.
-  async function onSubmit(values : z.infer<typeof PatientFormValidation>) {
+  async function onSubmit(values: z.infer<typeof PatientFormValidation>) {
+    console.log("loading started");
     setIsLoading(true);
     let formData;
-
-    if(values.identificationDocument && values.identificationDocument.length > 0){
+  
+    if (values.identificationDocument && values.identificationDocument.length > 0) {
       const blobFile = new Blob([values.identificationDocument[0]], {
         type: values.identificationDocument[0].type,
-      })
+      });
       formData = new FormData();
-      formData.append('blobFile', blobFile);
-      formData.append('fileName', values.identificationDocument[0].name);
+      formData.append("blobFile", blobFile);
+      formData.append("fileName", values.identificationDocument[0].name);
     }
+  
     try {
       const patientData = {
         ...values,
         userId: user.$id,
         birthDate: new Date(values.birthDate),
-        IdentificationDocument: formData
-      }
-
-      //@ts-ignore
+        identificationDocument: formData,
+      };
+  
+      console.log("Submitting patient data:", patientData);
+      // @ts-ignore
       const patient = await registerPatient(patientData);
-      if(patient) router.push(`/patients/${user.$id}/new-appointment`)
+      console.log("Patient response:", patient);
+  
+      if (patient) {
+        console.log("Redirecting to:", `/patients/${user.$id}/new-appointment`);
+        router.push(`/patients/${user.$id}/new-appointment`);
+      }
     } catch (error) {
       console.error("Error creating user:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
+  
 
   return (
     <Form {...form}>
@@ -93,7 +104,7 @@ const RegisterForm = ({ user }: { user: User }) => {
           <CustomFormField
             fieldtype={FormFieldType.INPUT}
             control={form.control}
-            name="email"
+            name="Emaill"
             label="Email"
             placeholder="joe@gmail.com"
             iconSrc="/assets/icons/email.svg"
@@ -180,12 +191,13 @@ const RegisterForm = ({ user }: { user: User }) => {
           <CustomFormField
             fieldtype={FormFieldType.PHONE_INPUT}
             control={form.control}
-            name="emergencyContactPhone"
+            name="EmergencyContactNumber" // Matches the schema
             label="Emergency Contact"
             placeholder="+91 123-456-7890"
             iconSrc="/assets/icons/user.svg"
             iconAlt="user"
-          />
+        />
+
         </div>
         <section className="space-y-6">
           <div className="mb-9 space-y-1">
@@ -328,7 +340,7 @@ const RegisterForm = ({ user }: { user: User }) => {
           label="I consent to privacy policy"
         />
 
-        <SubmitButton isLoading={isLoading}   onClick={() => console.log("Button clicked!")}>Get Started</SubmitButton>
+        <SubmitButton isLoading={isLoading} >Get Started</SubmitButton>
       </form>
     </Form>
   );

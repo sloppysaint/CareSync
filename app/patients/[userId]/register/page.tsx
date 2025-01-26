@@ -13,7 +13,7 @@ const Register = async ({ params }: RegisterProps) => {
 
     // Fetch user details
     const user = await getUser(userId);
-
+    console.log(resolvedParams)
     return (
       <div className="flex h-screen max-h-screen">
         <section className="remove-scrollbar container">

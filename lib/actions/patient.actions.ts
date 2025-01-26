@@ -1,73 +1,116 @@
-'use server'
+"use server";
 
-import { ID, Query } from "node-appwrite";
-import { BUCKET_ID, databases, DB_ID, ENDPOINT, PATIENT_COLLECTION_ID, PROJECT_ID, storage, users } from "../appwrite.config";
-import { parseStringify } from "../utils";
+import { ID,  Query } from "node-appwrite";
 import {InputFile} from "node-appwrite/file"
+import {
+  BUCKET_ID,
+  DB_ID,
+  ENDPOINT,
+  PATIENT_COLLECTION_ID,
+  PROJECT_ID,
+  databases,
+  storage,
+  users,
+} from "../appwrite.config";
+import { parseStringify } from "../utils";
+
+// CREATE APPWRITE USER
 export const createUser = async (user: CreateUserParams) => {
-  // Validate the phone number format
-  const phoneRegex = /^\+\d{1,15}$/;
-  if (!phoneRegex.test(user.phone)) {
-    throw new Error(
-      "Invalid phone number. It must start with '+' and contain up to 15 digits."
-    );
-  }
-  console.log(user.phone);
   try {
-    const newUser = await users.create(
-      ID.unique(), // Generate a unique user ID
-      user.email,
-      user.phone, // User's phone  // User's email
+    // Create new user -> https://appwrite.io/docs/references/1.5.x/server-nodejs/users#create
+    const newuser = await users.create(
+      ID.unique(),
+      user.Emaill,
+      user.phone,
       undefined,
-      user.name // User's name
+      user.name
     );
-    console.log(newUser);
-    return parseStringify(newUser);
+
+    return parseStringify(newuser);
   } catch (error: any) {
+    // Check existing user
     if (error && error?.code === 409) {
-      // Handle duplicate user case
-      const documents = await users.list([Query.equal("email", [user.email])]);
-      return documents?.users[0]; // Return existing user
+      const existingUser = await users.list([
+        Query.equal("email", [user.Emaill]),
+      ]);
+
+      return existingUser.users[0];
     }
-    throw error; // Rethrow other errors
+    console.error("An error occurred while creating a new user:", error);
   }
 };
 
+// GET USER
 export const getUser = async (userId: string) => {
   try {
     const user = await users.get(userId);
+
     return parseStringify(user);
   } catch (error) {
-    console.log(error);
+    console.error(
+      "An error occurred while retrieving the user details:",
+      error
+    );
   }
 };
 
+// REGISTER PATIENT
 export const registerPatient = async ({
+  userId,
   identificationDocument,
   ...patient
 }: RegisterUserParams) => {
   try {
+    console.log("Payload received in registerPatient:", {
+      userId,
+      patient,
+      identificationDocument,
+    });
+    console.log("identificationDocument structure:", identificationDocument);
+
     let file;
+    let identificationDocumentUrl = null;
+
     if (identificationDocument) {
-      const inputFile = InputFile.fromBuffer(
-        identificationDocument?.get('blobFile') as Blob,
-        identificationDocument?.get('fileName') as string,
-      )
-      file = await storage.createFile(BUCKET_ID!, ID.unique(), inputFile);
+
+      // Extract values from FormData
+      const blobFile = identificationDocument.get("blobFile") as File; // `get` returns the value of the specified key
+      const fileName = blobFile?.name; // Get the file name from the `File` object
+
+      if (blobFile && fileName) {
+        // Convert File object to InputFile
+        const arrayBuffer = await blobFile.arrayBuffer();
+        const inputFile = InputFile.fromBuffer(Buffer.from(arrayBuffer), fileName);
+
+        // Upload file
+        file = await storage.createFile(BUCKET_ID!, ID.unique(), inputFile);
+
+        // Generate file URL
+        identificationDocumentUrl = `${ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${file.$id}/view?project=${PROJECT_ID}`;
+      } else {
+        console.error("Invalid identificationDocument provided.");
+      }
     }
+    console.log("Type of identificationDocument:", typeof identificationDocument);
+    console.log("Content of identificationDocument:", identificationDocument);
+
+
+    // Create new patient record
     const newPatient = await databases.createDocument(
-      
       DB_ID!,
       PATIENT_COLLECTION_ID!,
       ID.unique(),
       {
+        userId,
         identificationDocumentId: file?.$id || null,
-        identificationDocumentUrl: `${ENDPOINT}/storage/buckets/${BUCKET_ID}/files/${file?.$id}/view?project = ${PROJECT_ID}`,
-        ...patient
+        identificationDocumentUrl: identificationDocumentUrl || "No document provided", // Fallback for optional fields
+        ...patient,
       }
-    )
+    );
+
     return parseStringify(newPatient);
   } catch (error) {
-    console.error("Error registering patient:", error);
+    console.error("An error occurred while creating a new patient:", error);
+    throw error;
   }
 };
