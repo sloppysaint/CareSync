@@ -9,6 +9,7 @@ const Success = async ({params: {userId}, searchParams}: SearchParamProps) => {
   const appointmentId = (searchParams?.appointmentId as string) || ''
   const appointment = await getAppointment(appointmentId)
   const doctor = Doctors.find((doc) => doc.name === appointment.primaryPhysician)
+
   return (
     <div className='flex h-screen max-h-screen px-[5%]'>
         <div className='success-img'>
