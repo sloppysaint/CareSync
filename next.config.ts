@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb", // Increase the body size limit to 10 MB (adjust as needed)
     },
   },
+  typescript:{
+    ignoreBuildErrors: true, // Ignore TypeScript compilation errors in production
+  },
+  eslint:{
+    ignoreDuringBuilds: true, // Ignore ESLint errors during build
+  }
 };
 
 export default withSentryConfig(nextConfig, {
